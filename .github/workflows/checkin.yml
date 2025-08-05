@@ -27,5 +27,5 @@ jobs:
       - name: 执行签到
         env:
           # 从GitHub Secrets获取多个session3rd，用逗号分隔
-          SESSION3RDS: ${{ secrets.SESSION3RDS }}
+          SESSION3RDS: ${{ secrets.SESSION_3RD }}
         run: python checkin.py
