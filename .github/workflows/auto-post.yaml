@@ -1,4 +1,4 @@
-name: 定时执行POST请求
+name: 安卓定时执行POST请求
 
 # 触发条件：每5分钟一次，同时允许手动触发
 on:
@@ -6,65 +6,50 @@ on:
   schedule:
     - cron: '*/5 * * * *'  # 每5分钟执行一次
 
+# 工作流权限设置
+permissions:
+  contents: read  # 仅需要读取代码的权限
+
 jobs:
   post-request:
     runs-on: ubuntu-latest
+    name: 发送POST请求
+    timeout-minutes: 5  # 任务超时时间
     
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1  # 只拉取最新提交，加快速度
       
       - name: 设置Python环境
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+          cache: 'pip'  # 缓存pip依赖，加快安装速度
       
       - name: 安装依赖
-        run: pip install requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+        id: install-deps  # 步骤ID，便于日志定位
       
-      - name: 创建并运行Python脚本
+      - name: 运行POST请求脚本
         env:
           AZID: ${{ secrets.AZID }}  # 从secrets获取AZID变量
+          PYTHONUNBUFFERED: 1  # 确保日志实时输出
         run: |
-          cat > script.py << 'EOF'
-          import requests
-          import json
-          
-          url = "https://api.planet.shenxu.net.cn/planet/api/client/reward/done"
-          headers = {
-            "sign": "b73548fc0fa46d64a9e5810bcdadcf5f",
-            "user-agent": "Mozilla/5.0 (Linux; Android 14; M2102K1C Build/UKQ1.240624.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/138.0.7204.168 Mobile Safari/537.36 uni-app Html5Plus/1.0 (Immersed/39.142857)",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Host": "api.planet.shenxu.net.cn",
-            "Connection": "Keep-Alive",
-            "Accept-Encoding": "gzip"
-          }
-          
-          # 从环境变量获取AZID（即session3rd）
-          import os
-          session3rd = os.getenv('AZID')
-          if not session3rd:
-              raise ValueError("AZID环境变量未设置")
-          
-          # 构建数据
-          data = f"scene=0&version=1.1.11&session3rd={session3rd}&adUnitId=adunit-d744d39589885989&type=100"
-          
-          try:
-              res = requests.post(url, headers=headers, data=data)
-              res.raise_for_status()  # 检查请求是否成功
-              
-              # 解析JSON响应
-              response_data = res.json()
-              
-              # 输出message结果
-              print(f"响应message: {response_data.get('message', '未找到message字段')}")
-              print(f"完整响应: {response_data}")
-              
-          except requests.exceptions.RequestException as e:
-              print(f"请求出错: {e}")
-          except json.JSONDecodeError:
-              print(f"响应不是有效的JSON: {res.text}")
-          EOF
-          
-          # 运行脚本
-          python script.py
+          echo "开始执行POST请求脚本..."
+          python post_request.py
+        id: run-script
+      
+      - name: 任务执行结果
+        if: always()  # 无论前面步骤是否成功都执行
+        run: |
+          if [ "${{ steps.run-script.outcome }}" = "success" ]; then
+            echo "任务执行成功"
+          else
+            echo "任务执行失败"
+            exit 1  # 标记工作流失败
+          fi
+    
