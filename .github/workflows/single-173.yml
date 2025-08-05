@@ -18,7 +18,7 @@ jobs:
             // 目标URL
             const url = "https://api.planet.shenxu.net.cn/planet/api/client/reward/done";
             
-            // 从环境变量获取多个session3rd，使用逗号分隔
+            // 从环境变量获取多个SESSION_3RD，使用逗号分隔
             const sessions = process.env.SESSION_3RDS?.split(',').map(s => s.trim()).filter(Boolean);
             
             // 检查是否有有效的会话
@@ -90,4 +90,4 @@ jobs:
             }
         env:
           # 多个session3rd值，使用逗号分隔
-          SESSION_3RDS: ${{ secrets.SESSION_3RDS }}
+          SESSION_3RDS: ${{ secrets.SESSION_3RD }}
