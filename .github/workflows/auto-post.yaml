@@ -2,9 +2,9 @@ name: 定时执行POST请求
 
 # 触发条件：每5分钟一次，同时允许手动触发
 on:
+  workflow_dispatch:  # 允许手动触发
   schedule:
     - cron: '*/5 * * * *'  # 每5分钟执行一次
-  workflow_dispatch:  # 允许手动触发
 
 jobs:
   post-request:
