@@ -32,6 +32,8 @@
 4. 在弹出的表单中：
    - **Name** 填写：`SESSION_3RD`
    - **Secret** 填写：你的实际session3rd值
+   - 在 GitHub Secrets 中创建 SESSION_3RDS（注意名称）
+以逗号分隔的形式添加所有会话值，例如：abc123,def456,ghi789
 5. 点击 **Add secret** 保存
 
 ## 工作原理
