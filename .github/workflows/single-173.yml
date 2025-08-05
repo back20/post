@@ -15,8 +15,6 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const axios = require('axios');
-            
             // 单个目标URL
             const url = "https://api.planet.shenxu.net.cn/planet/api/client/reward/done";
             
@@ -39,11 +37,25 @@ jobs:
               // 构建请求数据
               const data = `scene=0&version=1.2.3&session3rd=${session}&adUnitId=adunit-d744d39589885989&type=100`;
               
-              // 发送POST请求
-              const response = await axios.post(url, data, { headers });
+              // 使用fetch发送POST请求
+              const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: data
+              });
+              
+              // 解析响应内容
+              const responseData = await response.json();
               
               console.log(`对 ${url} 请求成功，状态码: ${response.status}`);
-              console.log(`响应内容: ${JSON.stringify(response.data, null, 2)}`);
+              // 专门提取并显示message字段
+              if (responseData.message !== undefined) {
+                console.log(`响应消息: ${responseData.message}`);
+              } else {
+                console.log("响应中未包含message字段");
+              }
+              // 同时保留完整响应内容输出
+              console.log(`完整响应内容: ${JSON.stringify(responseData, null, 2)}`);
             } catch (error) {
               console.error(`对 ${url} 请求失败: ${error.message}`);
               // 如需在请求失败时标记工作流为失败，取消下面一行注释
