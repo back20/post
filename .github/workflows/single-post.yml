@@ -1,0 +1,54 @@
+name: Single Session & URL POST Request
+
+# 定时触发：每5分钟执行一次
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # 每5分钟执行一次
+
+jobs:
+  send-single-post:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Send single POST request
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const axios = require('axios');
+            
+            // 单个目标URL
+            const url = "https://api.planet.shenxu.net.cn/planet/api/client/reward/done";
+            
+            // 从环境变量获取单个session3rd
+            const session = process.env.SESSION_3RD;
+            
+            // 请求头配置
+            const headers = {
+              "Host": "api.planet.shenxu.net.cn",
+              "Content-Type": "application/x-www-form-urlencoded",
+              "Accept-Encoding": "gzip, deflate, br",
+              "Connection": "keep-alive",
+              "Accept": "*/*",
+              "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Html5Plus/1.0 (Immersed/20) uni-app",
+              "sign": "9117d8eaf7b0686562d6504d1b73a05c",
+              "Accept-Language": "zh-CN,zh-Hans;q=0.9"
+            };
+            
+            try {
+              // 构建请求数据
+              const data = `scene=0&version=1.2.3&session3rd=${session}&adUnitId=adunit-d744d39589885989&type=100`;
+              
+              // 发送POST请求
+              const response = await axios.post(url, data, { headers });
+              
+              console.log(`对 ${url} 请求成功，状态码: ${response.status}`);
+              console.log(`响应内容: ${JSON.stringify(response.data, null, 2)}`);
+            } catch (error) {
+              console.error(`对 ${url} 请求失败: ${error.message}`);
+              // 如需在请求失败时标记工作流为失败，取消下面一行注释
+              // throw new Error(`POST request failed for ${url}`);
+            }
+        env:
+          # 单个session3rd值
+          SESSION_3RD: ${{ secrets.SESSION_3RD }}
+    
