@@ -1,4 +1,4 @@
-name: Single Session & URL POST Request
+name: Multiple Sessions & URL POST Request
 
 # 触发条件：定时触发 + 手动触发
 on:
@@ -7,19 +7,27 @@ on:
   workflow_dispatch:  # 允许手动触发
 
 jobs:
-  send-single-post:
+  send-multiple-posts:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Send single POST request
+      - name: Send POST requests for multiple sessions
         uses: actions/github-script@v6
         with:
           script: |
-            // 单个目标URL
+            // 目标URL
             const url = "https://api.planet.shenxu.net.cn/planet/api/client/reward/done";
             
-            // 从环境变量获取单个session3rd
-            const session = process.env.SESSION_3RD;
+            // 从环境变量获取多个session3rd，使用逗号分隔
+            const sessions = process.env.SESSION_3RDS?.split(',').map(s => s.trim()).filter(Boolean);
+            
+            // 检查是否有有效的会话
+            if (!sessions || sessions.length === 0) {
+              console.error("错误：未设置有效的SESSION_3RDS环境变量，请检查secrets配置");
+              throw new Error("No valid SESSION_3RDS configured");
+            }
+            
+            console.log(`发现 ${sessions.length} 个会话，将为每个会话发送请求...`);
             
             // 请求头配置
             const headers = {
@@ -33,35 +41,53 @@ jobs:
               "Accept-Language": "zh-CN,zh-Hans;q=0.9"
             };
             
-            try {
-              // 构建请求数据
-              const data = `scene=0&version=1.2.3&session3rd=${session}&adUnitId=adunit-d744d39589885989&type=100`;
+            // 用于跟踪是否所有请求都成功
+            let allSuccess = true;
+            
+            // 为每个会话发送请求
+            for (let i = 0; i < sessions.length; i++) {
+              const session = sessions[i];
+              const sessionIndex = i + 1;
               
-              // 使用fetch发送POST请求
-              const response = await fetch(url, {
-                method: 'POST',
-                headers: headers,
-                body: data
-              });
+              console.log(`\n处理第 ${sessionIndex}/${sessions.length} 个会话...`);
               
-              // 解析响应内容
-              const responseData = await response.json();
-              
-              console.log(`对 ${url} 请求成功，状态码: ${response.status}`);
-              // 专门提取并显示message字段
-              if (responseData.message !== undefined) {
-                console.log(`响应消息: ${responseData.message}`);
-              } else {
-                console.log("响应中未包含message字段");
+              try {
+                // 构建请求数据，对session进行URL编码处理特殊字符
+                const data = `scene=0&version=1.2.3&session3rd=${encodeURIComponent(session)}&adUnitId=adunit-d744d39589885989&type=100`;
+                
+                // 发送POST请求
+                const response = await fetch(url, {
+                  method: 'POST',
+                  headers: headers,
+                  body: data
+                });
+                
+                // 检查HTTP状态码
+                if (!response.ok) {
+                  throw new Error(`请求失败，状态码: ${response.status}`);
+                }
+                
+                // 解析响应内容
+                const responseData = await response.json();
+                
+                console.log(`会话 ${sessionIndex} 请求成功，状态码: ${response.status}`);
+                if (responseData.message !== undefined) {
+                  console.log(`响应消息: ${responseData.message}`);
+                } else {
+                  console.log("响应中未包含message字段");
+                }
+                console.log(`完整响应内容: ${JSON.stringify(responseData, null, 2)}`);
+                
+              } catch (error) {
+                allSuccess = false;
+                console.error(`会话 ${sessionIndex} 请求失败: ${error.message}`);
               }
-              // 同时保留完整响应内容输出
-              console.log(`完整响应内容: ${JSON.stringify(responseData, null, 2)}`);
-            } catch (error) {
-              console.error(`对 ${url} 请求失败: ${error.message}`);
-              // 如需在请求失败时标记工作流为失败，取消下面一行注释
-              // throw new Error(`POST request failed for ${url}`);
+            }
+            
+            // 如果有任何请求失败，标记工作流为失败
+            if (!allSuccess) {
+              throw new Error(`部分或全部会话请求失败，请查看日志`);
             }
         env:
-          # 单个session3rd值
-          SESSION_3RD: ${{ secrets.SESSION_3RD }}
-    
+          # 多个session3rd值，使用逗号分隔
+          SESSION_3RDS: ${{ secrets.SESSION_3RDS }}
