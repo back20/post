@@ -1,0 +1,57 @@
+name: 安卓post
+
+# 允许手动触发和定时触发
+on:
+  workflow_dispatch:  # 手动触发
+  schedule:
+    - cron: '*/5 * * * *'  # 每5分钟执行一次
+
+jobs:
+  post-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+          
+      - name: Execute POST request
+        run: |
+          python - <<END
+          import requests
+          
+          url = "https://api.planet.shenxu.net.cn/planet/api/client/reward/done"
+          headers = {
+            "sign": "b73548fc0fa46d64a9e5810bcdadcf5f",
+            "user-agent": "Mozilla/5.0 (Linux; Android 14; M2102K1C Build/UKQ1.240624.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/138.0.7204.168 Mobile Safari/537.36 uni-app Html5Plus/1.0 (Immersed/39.142857)",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Host": "api.planet.shenxu.net.cn",
+            "Connection": "Keep-Alive",
+            "Accept-Encoding": "gzip"
+          }
+          
+          # 从环境变量获取session3rd
+          session3rd = "${{ secrets.AZID }}"
+          data = f"scene=0&version=1.1.11&session3rd={session3rd}&adUnitId=adunit-d744d39589885989&type=100"
+          
+          try:
+              res = requests.post(url, headers=headers, data=data)
+              print(f"Response status code: {res.status_code}")
+              print(f"Response content: {res.text}")
+              
+              # 检查请求是否成功
+              if res.status_code == 200:
+                  print("POST request successful")
+              else:
+                  print(f"POST request failed with status code: {res.status_code}")
+          except Exception as e:
+              print(f"An error occurred: {str(e)}")
+          END
+          
+      - name: Output result
+        run: echo "POST request completed. Check logs for details."
