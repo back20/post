@@ -1,4 +1,4 @@
-name: 安卓post
+name: 安卓POST请求
 
 # 允许手动触发和定时触发
 on:
@@ -10,17 +10,17 @@ jobs:
   post-request:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Python
+      - name: 配置Python环境
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
           
-      - name: Install dependencies
+      - name: 安装依赖包
         run: |
           python -m pip install --upgrade pip
           pip install requests
           
-      - name: Execute POST request
+      - name: 执行POST请求
         run: |
           python - <<END
           import requests
@@ -41,17 +41,17 @@ jobs:
           
           try:
               res = requests.post(url, headers=headers, data=data)
-              print(f"Response status code: {res.status_code}")
-              print(f"Response content: {res.text}")
+              print(f"响应状态码: {res.status_code}")
+              print(f"响应内容: {res.text}")
               
               # 检查请求是否成功
               if res.status_code == 200:
-                  print("POST request successful")
+                  print("POST请求成功")
               else:
-                  print(f"POST request failed with status code: {res.status_code}")
+                  print(f"POST请求失败，状态码: {res.status_code}")
           except Exception as e:
-              print(f"An error occurred: {str(e)}")
+              print(f"发生错误: {str(e)}")
           END
           
-      - name: Output result
-        run: echo "POST request completed. Check logs for details."
+      - name: 输出结果
+        run: echo "POST请求已完成。详情请查看日志。"
