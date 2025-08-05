@@ -1,4 +1,4 @@
-name: Multiple Sessions & URL POST Request
+name: 苹果post
 
 # 触发条件：定时触发 + 手动触发
 on:
